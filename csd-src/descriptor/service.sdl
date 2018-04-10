@@ -1,0 +1,369 @@
+{
+	"name": "ELASTICSEARCH",
+	"label": "Elastic Search",
+	"description": "Elastic Search service",
+	"version": 1,
+	"runAs": {
+		"user": "root",
+		"group": "root"
+	},
+	"maxInstances": 1,
+	"icon": "images/icon.png",
+	"compatibility": {
+		"generation": 1,
+		"cdhVersion": {
+			"min": 5,
+			"max": 5
+		}
+	},
+	"parcel": {
+		"requiredTags": ["cdh"],
+		"optionalTags": ["es-plugin"]
+	},
+	"commands" : [
+		{
+		"name" : "ForceStop",
+		"label" : "Force stop",
+		"description" : "Force stop of Elastic Search Nodes",
+		"roleCommand" : "ForceStopRole",
+		"roleName" : "ES_NODE",
+		"runMode" : "all"
+		}
+	],
+	"roles": [{
+		"name": "ES_NODE",
+		"label": "Elastic Search Node",
+		"pluralLabel": "Elastic Search Nodes",
+		"jvmBased": true,
+		"startRunner": {
+			"program": "scripts/control.sh",
+			"args": ["start"]
+		},
+		"stopRunner" : {
+			"timeout" : "90000",
+			"runner" : {
+				"program" : "scripts/control.sh",
+				"args" : ["stop"]
+				}
+		},
+		"commands": [
+			{
+			"name": "ForceStopRole",
+			"label": "Force Stop Role",
+			"description": "Force stop of Elastic Search Node",
+			"expectedExitCodes": [0],
+			"requiredRoleState": "stopped",
+			"commandRunner": {
+				"program": "scripts/control.sh",
+				"args": ["stop"]
+				}
+			}
+		],
+		"configWriter": {
+			"generators": [
+			{
+				"filename": "jvm.properties",
+				"configFormat": "properties",
+				"includedParams": [
+					"Xms",
+					"Xmx",
+					"UseConcMarkSweepGC",
+					"CMSInitiatingOccupancyFraction",
+					"UseCMSInitiatingOccupancyOnly",
+					"DisableExplicitGC",
+					"AlwaysPreTouch",
+					"server",
+					"Xss",
+					"java_awt_headless",
+					"file_encoding",
+					"jna_nosys",
+					"jdk_io_permissionsUseCanonicalPath",
+					"io_netty_noUnsafe",
+					"io_netty_noKeySetOptimization",
+					"io_netty_recycler_maxCapacityPerThread",
+					"log4j_shutdownHookEnabled",
+					"log4j2_disable_jmx",
+					"log4j_skipJansi",
+					"HeapDumpOnOutOfMemoryError"
+				]
+			},
+			{
+				"filename": "elasticsearch.properties",
+				"configFormat": "properties",
+				"includedParams": [
+					"minimum_master_nodes",
+					"cluster_name",
+					"http_port",
+					"path_data",
+					"path_logs",
+					"http_cors_enabled",
+					"http_cors_allow_origin"
+				],
+				"additionalConfigs" : [
+				{
+					"key" : "node.name",
+					"value" : "${host}"
+				},
+				{
+					"key" : "network.host",
+					"value" : "[\"${host}\", _local_]"
+				}]
+			}
+			],
+			"peerConfigGenerators" : [
+			{
+				"filename" : "nodes.properties",
+				"params" : ["cluster_name"],
+				"roleName" : "ES_NODE"
+			}]
+		}
+	}],
+	"parameters": [
+	{
+		"name": "minimum_master_nodes",
+		"label": "Minimum number of master nodes",
+		"description": "Minimum number of master nodes",
+		"configName": "discovery.zen.minimum_master_nodes",
+		"required": "true",
+		"type": "long",
+		"default": "1"
+	},
+	{
+		"name": "cluster_name",
+		"label": "cluster.name",
+		"description": "Name of Cluster",
+		"configName": "cluster.name",
+		"required": "true",
+		"type": "string",
+		"configurableInWizard": true,
+		"default": "data-lakes"
+	},
+	{
+		"name": "http_port",
+		"label": "HTTP port",
+		"description": "Set a custom port for HTTP",
+		"configName": "http.port",
+		"required": "true",
+		"type": "long",
+		"default": "9200"
+	},
+	{
+		"name": "path_data",
+		"label": "Path to data directory",
+		"description": "Path to directory where to store the data (separate multiple locations by comma)",
+		"configName": "path.data",
+		"required": "true",
+		"type": "path",
+		"pathType": "localDataDir",
+		"default": "/var/lib/elasticsearch/"
+	},
+	{
+		"name": "path_logs",
+		"label": "Path to logs directory",
+		"description": "Path to log files",
+		"configName": "path.logs",
+		"required": "true",
+		"type": "path",
+		"pathType": "localDataDir",
+		"default": "/var/log/elasticsearch/"
+	},
+	{
+		"name": "http_cors_enabled",
+		"label": "Cross-origin resource sharing",
+		"description": "Enable or disable cross-origin resource sharing",
+		"configName": "http.cors.enabled",
+		"required": "true",
+		"type": "boolean",
+		"default": "true"
+	},
+	{
+		"name": "http_cors_allow_origin",
+		"label": "Cross-origin allow pattern",
+		"description": "Which origins to allow. Defaults to no origins allowed. If you prepend and append a / to the value, this will be treated as a regular expression, allowing you to support HTTP and HTTPs. for example using /https?:\/\/localhost(:[0-9]+)?/ would return the request header appropriately in both cases. * is a valid value but is considered a security risk as your elasticsearch instance is open to cross origin requests from anywhere.",
+		"configName": "http.cors.allow-origin",
+		"required": "true",
+		"type": "string",
+		"default": "/.*/"
+	},
+	{
+		"name": "Xms",
+		"label": "JVM Xms",
+		"description": "Xms represents the initial size of total heap space",
+		"configName": "Xms",
+		"required": "true",
+		"type": "string",
+		"default": "-Xms2g"
+	},
+	{
+		"name": "Xmx",
+		"label": "JVM Xmx",
+		"description": "Xms represents the maximum size of total heap space",
+		"configName": "Xmx",
+		"required": "true",
+		"type": "string",
+		"default": "-Xmx2g"
+	},
+	{
+		"name": "UseConcMarkSweepGC",
+		"label": "JVM UseConcMarkSweepGC",
+		"description": "Enable ConcurrentMarkSweep (CMS)",
+		"configName": "UseConcMarkSweepGC",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:+UseConcMarkSweepGC"
+	},
+	{
+		"name": "CMSInitiatingOccupancyFraction",
+		"label": "JVM CMSInitiatingOccupancyFraction",
+		"description": "CMS Initiating Occupancy Fraction",
+		"configName": "CMSInitiatingOccupancyFraction",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:CMSInitiatingOccupancyFraction=75"
+	},
+	{
+		"name": "UseCMSInitiatingOccupancyOnly",
+		"label": "JVM UseCMSInitiatingOccupancyOnly",
+		"description": "Use CMS Initiating Occupancy Only",
+		"configName": "UseCMSInitiatingOccupancyOnly",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:+UseCMSInitiatingOccupancyOnly"
+	},
+	{
+		"name": "DisableExplicitGC",
+		"label": "JVM DisableExplicitGC",
+		"description": "Disable calls to System#gc",
+		"configName": "DisableExplicitGC",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:+DisableExplicitGC"
+	},
+	{
+		"name": "AlwaysPreTouch",
+		"label": "JVM AlwaysPreTouch",
+		"description": "Pre-touch memory pages used by the JVM during initialization",
+		"configName": "AlwaysPreTouch",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:+AlwaysPreTouch"
+	},
+	{
+		"name": "server",
+		"label": "JVM Server",
+		"description": "Force the server VM (remove on 32-bit client JVMs)",
+		"configName": "server",
+		"required": "false",
+		"type": "string",
+		"default": "-server"
+	},
+	{
+		"name": "Xss",
+		"label": "JVM Xss",
+		"description": "Explicitly set the stack size (reduce to 320k on 32-bit client JVMs)",
+		"configName": "Xss",
+		"required": "true",
+		"type": "string",
+		"default": "-Xss1m"
+	},
+	{
+		"name": "java_awt_headless",
+		"label": "JVM java.awt.headless",
+		"description": "Set to headless, just in case",
+		"configName": "java.awt.headless",
+		"required": "false",
+		"type": "string",
+		"default": "-Djava.awt.headless=true"
+	},
+	{
+		"name": "file_encoding",
+		"label": "JVM file.encoding",
+		"description": "Ensure UTF-8 encoding by default (e.g. filenames)",
+		"configName": "file.encoding",
+		"required": "true",
+		"type": "string",
+		"default": "-Dfile.encoding=UTF-8"
+	},
+	{
+		"name": "jna_nosys",
+		"label": "JVM jna.nosys",
+		"description": "Use our provided JNA always versus the system one",
+		"configName": "jna.nosys",
+		"required": "true",
+		"type": "string",
+		"default": "-Djna.nosys=true"
+	},
+	{
+		"name": "jdk_io_permissionsUseCanonicalPath",
+		"label": "JVM jdk.io.permissionsUseCanonicalPath",
+		"description": "Use old-style file permissions on JDK9",
+		"configName": "jdk.io.permissionsUseCanonicalPath",
+		"required": "false",
+		"type": "string",
+		"default": "-Djdk.io.permissionsUseCanonicalPath=true"
+	},
+	{
+		"name": "io_netty_noUnsafe",
+		"label": "JVM io.netty.noUnsafe",
+		"description": "Flag to configure Netty",
+		"configName": "io.netty.noUnsafe",
+		"required": "false",
+		"type": "string",
+		"default": "-Dio.netty.noUnsafe=true"
+	},
+	{
+		"name": "io_netty_noKeySetOptimization",
+		"label": "JVM io.netty.noKeySetOptimization",
+		"description": "Flag to configure Netty",
+		"configName": "io.netty.noKeySetOptimization",
+		"required": "false",
+		"type": "string",
+		"default": "-Dio.netty.noKeySetOptimization=true"
+	},
+	{
+		"name": "io_netty_recycler_maxCapacityPerThread",
+		"label": "JVM io.netty.recycler.maxCapacityPerThread",
+		"description": "Flag to configure Netty",
+		"configName": "io.netty.recycler.maxCapacityPerThread",
+		"required": "false",
+		"type": "string",
+		"default": "-Dio.netty.recycler.maxCapacityPerThread=0"
+	},
+	{
+		"name": "log4j_shutdownHookEnabled",
+		"label": "JVM log4j.shutdownHookEnabled",
+		"description": "Log4j property",
+		"configName": "log4j.shutdownHookEnabled",
+		"required": "false",
+		"type": "string",
+		"default": "-Dlog4j.shutdownHookEnabled=false"
+	},
+	{
+		"name": "log4j2_disable_jmx",
+		"label": "JVM log4j2.disable.jmx",
+		"description": "Log4j property",
+		"configName": "log4j2.disable.jmx",
+		"required": "false",
+		"type": "string",
+		"default": "-Dlog4j2.disable.jmx=true"
+	},
+	{
+		"name": "log4j_skipJansi",
+		"label": "JVM log4j.skipJansi",
+		"description": "Log4j property",
+		"configName": "log4j.skipJansi",
+		"required": "false",
+		"type": "string",
+		"default": "-Dlog4j.skipJansi=true"
+	},
+	{
+		"name": "HeapDumpOnOutOfMemoryError",
+		"label": "JVM HeapDumpOnOutOfMemoryError",
+		"description": "Generate a heap dump when an allocation from the Java heap fails",
+		"configName": "HeapDumpOnOutOfMemoryError",
+		"required": "false",
+		"type": "string",
+		"default": "-XX:+HeapDumpOnOutOfMemoryError"
+	}	
+	]
+}

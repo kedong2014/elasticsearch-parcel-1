@@ -1,0 +1,3 @@
+#!/bin/bash
+
+export CDH_ES_HOME=$PARCELS_ROOT/$PARCEL_DIRNAME

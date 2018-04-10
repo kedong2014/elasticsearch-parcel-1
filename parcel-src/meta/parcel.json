@@ -1,0 +1,34 @@
+{
+  "schema_version":     1,
+  "name":               "ELASTICSEARCH",
+  "version":            "<VERSION-FULL>",
+  "setActiveSymlink":   true,
+
+  "depends": "CDH (>= 5.0), CDH (<< 6.0)",
+  "provides": ["elasticsearch"],
+  "scripts": {
+    "defines": "es_env.sh"
+  },
+
+  "packages": [{
+    "name": "elasticsearch",
+    "version": "<VERSION-FULL>"
+  }],
+
+  "components": [{
+    "name":    "elasticsearch",
+    "version": "<VERSION-SHORT>",
+    "pkg_version": "<VERSION-SHORT>"
+  }],
+
+  "users": {
+    "elasticsearch": {
+      "longname"    : "Elastic Search",
+      "home"        : "/var/lib/elasticsearch",
+      "shell"       : "/bin/bash",
+      "extra_groups": []
+    }
+  },
+
+  "groups": ["elasticsearch"]
+}
